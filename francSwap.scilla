@@ -136,8 +136,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       
 
       padTest = builtin mul amount tenthousand;
-      pad_token_amount = builtin mul padTest rate;
-      token_amount = builtin div pad_token_amount tenthousand;
+      token_amount = builtin mul padTest rate;
+
       
       
       padAmount = builtin mul token_amount tenthousand;
@@ -241,8 +241,8 @@ transition RecipientAcceptTransferFrom(
     | Some rate =>
       (*This would require token to have minimally 3 decimals *)
       padTest = builtin mul amount tenthousand;
-      pad_franc_amount = builtin div padTest rate;
-      franc_amount = builtin div pad_franc_amount tenthousand;
+      franc_amount = builtin div padTest rate;
+
       
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)

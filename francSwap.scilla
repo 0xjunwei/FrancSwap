@@ -19,6 +19,7 @@ fun (msg2 : Message) =>
 let zero = Uint128 0
 let ten = Uint128 10
 let hundred = Uint128 100
+let thousand = Uint128 1000
 let tenthousand = Uint128 10000
 let tenInt = Uint32 10
 
@@ -132,8 +133,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msg = {_tag: "TransferFrom"; _recipient : franc_addr; _amount: zero; from: _sender; to: _this_address; amount: amount};
       msgs = one_msg msg;
       send msgs;
-      
-      token_amount = builtin mul amount rate;
+      depadRate = builtin div rate thousand;
+      token_amount = builtin mul amount depadRate;
       padAmount = builtin mul token_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
@@ -230,8 +231,9 @@ transition RecipientAcceptTransferFrom(
   tokenWhitelisted <- token_to_franc_rate[_sender];
   match tokenWhitelisted with
     | Some rate =>
-      (*This would require franc to be at least 5 decimal places*)
-      franc_amount = builtin div amount rate;
+      (*This would require token to have minimally 3 decimals *)
+      depadRate = builtin div rate thousand;
+      franc_amount = builtin div amount depadRate;
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;

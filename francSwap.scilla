@@ -181,9 +181,13 @@ transition changeFrancAddr(address: ByStr20)
 end
 
 transition pauseContract()
+  isOwner;
+  contractPaused := true
 end
 
 transition unpauseContract()
+  isOwner;
+  contractPaused := false
 end
 
 
@@ -257,12 +261,3 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
-
-
-
-
-
-
-
-
-

@@ -133,9 +133,10 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msg = {_tag: "TransferFrom"; _recipient : franc_addr; _amount: zero; from: _sender; to: _this_address; amount: amount};
       msgs = one_msg msg;
       send msgs;
-      depadRate = builtin div rate thousand;
-      token_amount = builtin mul amount depadRate;
-      padAmount = builtin mul token_amount tenthousand;
+      
+      padAmount = builtin mul amount tenthousand;
+      token_amount = builtin mul padAmount rate;
+
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
       margin_percent = builtin sub tenthousand returnUserRate;
@@ -188,6 +189,7 @@ transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
   end
 end
 
+(*The rate to set would be rate divided by number of decimals franc has to the power of 10 e.g. franc 6 decimals, xsgd 8 decimals rate for 1:1 would be 100 *)
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
   isOwner;
   token_to_franc_rate[token_address] := token_franc_rate;
@@ -232,14 +234,14 @@ transition RecipientAcceptTransferFrom(
   match tokenWhitelisted with
     | Some rate =>
       (*This would require token to have minimally 3 decimals *)
-      depadRate = builtin div rate thousand;
-      franc_amount = builtin div amount depadRate;
-      padAmount = builtin mul franc_amount tenthousand;
+      padAmount = builtin mul amount tenthousand;
+      franc_amount = builtin div padAmount rate;
+
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
       margin_percent = builtin sub tenthousand returnUserRate;
-      margin_amount = builtin mul franc_amount margin_percent;
-      padded_franc_to_recipient = builtin sub padAmount margin_amount;
+      margin_amount = builtin mul amount margin_percent;
+      padded_franc_to_recipient = builtin sub franc_amount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
       
       (*Add token held balances*)

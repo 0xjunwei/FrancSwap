@@ -134,7 +134,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
-
+      (*Move to test for franc transferfrom*)
       padTest = builtin mul amount tenthousand;
       token_amount = builtin mul padTest rate;
 
@@ -148,7 +148,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       margin_amount = builtin mul token_amount margin_percent;
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
-      actual_sent = builtin div token_to_recipient thousand;
+
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;
@@ -157,7 +157,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
-              to: _sender; amount: actual_sent};
+              to: _sender; amount: token_to_recipient};
       msgs = one_msg msg;
       send msgs
       
@@ -239,7 +239,7 @@ transition RecipientAcceptTransferFrom(
   tokenWhitelisted <- token_to_franc_rate[_sender];
   match tokenWhitelisted with
     | Some rate =>
-      (*This would require token to have minimally 3 decimals *)
+
       padTest = builtin mul amount tenthousand;
       franc_amount = builtin div padTest rate;
 
@@ -251,7 +251,7 @@ transition RecipientAcceptTransferFrom(
       margin_amount = builtin mul franc_amount margin_percent;
       padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
-      actual_send = builtin div franc_to_recipient thousand;
+
       (*Add token held balances*)
       tok_bal <- token_balances[_sender];
       bal = get_val tok_bal;
@@ -260,13 +260,19 @@ transition RecipientAcceptTransferFrom(
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
-              to: sender; amount: actual_send};
+              to: sender; amount: franc_to_recipient};
       msgs = one_msg msg;
       send msgs
     | None =>
-      (*Token not whitelisted*)
-      err = CodeNotWhitelisted;
-      ThrowError err
+      franc_addr <- franc_address;
+      isFranc = builtin eq franc_addr _sender;
+      match isFranc with
+        | True =>
+        | False =>
+          (*Token not whitelisted*)
+          err = CodeNotWhitelisted;
+          ThrowError err
+      end
   end
 end
 
@@ -299,12 +305,3 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
-
-
-
-
-
-
-
-
-

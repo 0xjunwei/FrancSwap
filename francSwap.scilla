@@ -134,8 +134,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
-
-      token_amount = builtin mul amount rate;
+      padTest = builtin mul amount thousand;
+      token_amount = builtin mul padTest rate;
       padAmount = builtin mul token_amount tenthousand;
 
       (*Initial of 9950 would equate to 99.50% back to user*)
@@ -144,7 +144,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       margin_amount = builtin mul token_amount margin_percent;
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
-
+      actual_sent = builtin div token_to_recipient thousand;
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;
@@ -153,7 +153,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
-              to: _sender; amount: token_to_recipient};
+              to: _sender; amount: actual_sent};
       msgs = one_msg msg;
       send msgs
       
@@ -190,6 +190,8 @@ transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
   end
 end
 
+(*Rate setting would be multiplied by 1000 to factor in decimals exchange, 1:1 rate is set to 1000*)
+(*if 1.5 XSGD to 1 Franc rate will be set to 1500 as it would symbolise 1.5*)
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
   isOwner;
   token_to_franc_rate[token_address] := token_franc_rate;
@@ -234,7 +236,8 @@ transition RecipientAcceptTransferFrom(
   match tokenWhitelisted with
     | Some rate =>
       (*This would require token to have minimally 3 decimals *)
-      franc_amount = builtin div amount rate;
+      padTest = builtin mul amount thousand;
+      franc_amount = builtin div padTest rate;
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
@@ -242,7 +245,7 @@ transition RecipientAcceptTransferFrom(
       margin_amount = builtin mul franc_amount margin_percent;
       padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
-      
+      actual_send = builtin div franc_to_recipient thousand;
       (*Add token held balances*)
       tok_bal <- token_balances[_sender];
       bal = get_val tok_bal;
@@ -251,7 +254,7 @@ transition RecipientAcceptTransferFrom(
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
-              to: sender; amount: franc_to_recipient};
+              to: sender; amount: actual_send};
       msgs = one_msg msg;
       send msgs
     | None =>
@@ -290,3 +293,12 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
+
+
+
+
+
+
+
+
+

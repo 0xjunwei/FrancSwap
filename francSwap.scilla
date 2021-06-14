@@ -136,7 +136,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       
       (*Move to test for franc transferfrom*)
       padTest = builtin mul amount tenthousand;
-      token_amount = builtin mul padTest rate;
+      token_amount = builtin div padTest rate;
 
       
       
@@ -241,7 +241,7 @@ transition RecipientAcceptTransferFrom(
     | Some rate =>
 
       padTest = builtin mul amount tenthousand;
-      franc_amount = builtin div padTest rate;
+      franc_amount = builtin mul padTest rate;
 
       
       padAmount = builtin mul franc_amount tenthousand;

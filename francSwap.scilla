@@ -162,22 +162,48 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
 end
 
 transition setTokenToFrancRate(token_address: ByStr20, rate: Uint128)
+  isOwner;
+  tokenWhitelisted <- token_to_franc_rate[_sender];
+  match tokenWhitelisted with
+    | Some x =>
+      token_to_franc_rate[token_address] := rate
+    | None =>
+      (*Token not whitelisted*)
+      err = CodeNotWhitelisted;
+      ThrowError err
+  end
 end
 
 transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
+  isOwner;
+  tokenWhitelisted <- franc_to_token_rate[_sender];
+  match tokenWhitelisted with
+    | Some x =>
+      franc_to_token_rate[token_address] := rate
+    | None =>
+      (*Token not whitelisted*)
+      err = CodeNotWhitelisted;
+      ThrowError err
+  end
 end
 
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
+  isOwner;
+  token_to_franc_rate[token_address] := token_franc_rate;
+  franc_to_token_rate[token_address] := franc_token_rate
 end
 
 transition removeWhitelistTokenAddress(token_address: ByStr20)
 end
 
 transition changeMargin(margin: Uint128)
-
+  isOwner;
+  marginRate := margin
 end
 
 transition changeFrancAddr(address: ByStr20)
+  isOwner;
+  franc_address := address
 end
 
 transition pauseContract()
@@ -261,3 +287,12 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
+
+
+
+
+
+
+
+
+

@@ -134,9 +134,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
+
       token_amount = builtin mul amount rate;
-      
-      
       
       padAmount = builtin mul token_amount tenthousand;
 

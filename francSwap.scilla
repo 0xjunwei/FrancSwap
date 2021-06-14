@@ -135,6 +135,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       send msgs;
       
       (*Move to test for franc transferfrom*)
+      (*ISSUE HERE*)
       padTest = builtin mul amount tenthousand;
       token_amount = builtin mul padTest rate;
 
@@ -305,12 +306,4 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
-
-
-
-
-
-
-
-
 

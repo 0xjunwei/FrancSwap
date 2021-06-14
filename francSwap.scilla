@@ -61,7 +61,8 @@ let get_val =
   
 contract FranSwap
 (
-    contract_owner: ByStr20
+    contract_owner: ByStr20,
+    franc_token_address: ByStr20
 )
 (* Mutable fields *)
 field owner_addr: ByStr20 = contract_owner
@@ -71,8 +72,11 @@ field marginRate : Uint128 = Uint128 9950
 
 field contractPaused : Bool = True
 
+field franc_address : ByStr20 = franc_token_address
 field token_to_franc_rate: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 field franc_to_token_rate: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+
 
 (* Procedures *)
 procedure ThrowError(err : Error)
@@ -134,6 +138,10 @@ transition removeWhitelistTokenAddress(token_address: ByStr20)
 end
 
 transition changeMargin(margin: Uint128)
+
+end
+
+transition changeFrancAddr(address: ByStr20)
 end
 
 transition pauseContract()
@@ -145,7 +153,6 @@ end
 
 
 (*Transitions is needed should a TransferFrom be Used to send funds to this contract, without this transition the contract will reject any zrc-2 tokens*)
-(*Sent into this contract via the TransferFrom Transition, example could be seen in zilswap, where you sent your tokens to the zilswap contract without this transition, it would not work*)
 transition RecipientAcceptTransferFrom(
   initiator : ByStr20,
   sender : ByStr20,
@@ -161,15 +168,23 @@ transition RecipientAcceptTransferFrom(
       franc_amount = builtin div amount rate;
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
-      returnUser <- marginRate;
-      margin_percent = builtin sub tenthousand margin;
+      returnUserRate <- marginRate;
+      margin_percent = builtin sub tenthousand returnUserRate;
       margin_amount = builtin mul franc_amount margin_percent;
-      padded_franc_to_recipient = builtin sub padAmount margin_amount
+      padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
       
+      (*Add token held balances*)
+      tok_bal <- token_balances[_sender];
+      bal = get_val tok_bal;
+      newBal = builtin add bal amount;
+      token_balances[_sender] := newBal;
       
-      
-      
+      franc_addr <- franc_address;
+      msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
+              to: sender; amount: franc_to_recipient};
+      msgs = one_msg msg;
+      send msgs
     | None =>
       (*Token not whitelisted*)
       err = CodeNotWhitelisted;

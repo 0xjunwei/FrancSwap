@@ -149,7 +149,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       token_balances[token_address] := newBal;
       
       franc_addr <- franc_address;
-      msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
+      msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
               to: _sender; amount: token_to_recipient};
       msgs = one_msg msg;
       send msgs

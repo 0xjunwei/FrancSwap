@@ -135,10 +135,11 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       send msgs;
       
       (*Move to test for franc transferfrom*)
+      
       (*ISSUE HERE*)
       padTest = builtin mul amount tenthousand;
       token_amount = builtin mul padTest rate;
-
+      
       
       
       padAmount = builtin mul token_amount tenthousand;
@@ -153,7 +154,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;
-      newBal = builtin sub bal amount;
+      newBal = builtin sub bal token_to_recipient;
       token_balances[token_address] := newBal;
       
       franc_addr <- franc_address;
@@ -306,4 +307,12 @@ transition TransferFromSuccessCallBack (
   amount : Uint128
 )
 end
+
+
+
+
+
+
+
+
 

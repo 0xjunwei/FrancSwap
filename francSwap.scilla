@@ -136,7 +136,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       
       (*Move to test for franc transferfrom*)
       padTest = builtin mul amount tenthousand;
-      token_amount = builtin mul padTest rate;
+      token_amount = builtin div padTest rate;
 
       
       
@@ -194,8 +194,8 @@ transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
   end
 end
 
-(*Rate setting would be multiplied by 1000 to factor in decimals exchange, 1:1 rate is set to 100*)
-(*if 1.5 XSGD to 1 Franc rate will be set to 150 as it would symbolise 1.50*)
+(*Rate setting would be multiplied by 100 to factor in decimals exchange, 1:1 rate is set to 100*)
+(*if 1 franc to 1.5 xsgd rate will be set to 66 as it would symbolise 0.66*)
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
   isOwner;
   token_to_franc_rate[token_address] := token_franc_rate;
@@ -241,7 +241,7 @@ transition RecipientAcceptTransferFrom(
     | Some rate =>
 
       padTest = builtin mul amount tenthousand;
-      franc_amount = builtin div padTest rate;
+      franc_amount = builtin mul padTest rate;
 
       
       padAmount = builtin mul franc_amount tenthousand;

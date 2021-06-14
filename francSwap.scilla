@@ -146,7 +146,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       margin_amount = builtin mul token_amount margin_percent;
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
-      depad_token_to_recipient = builtin mul token_to_recipient hundred;
+      depad_token_to_recipient = builtin div token_to_recipient hundred;
+      
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;

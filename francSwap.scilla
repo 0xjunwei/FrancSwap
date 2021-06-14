@@ -123,6 +123,42 @@ transition swapTokenToFranc(token_address: ByStr20, amount: Uint128)
 end
 
 transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
+  isPaused;
+  (*Check if token is whitelisted*)
+  tokenWhitelisted <- franc_to_token_rate[token_address];
+  match tokenWhitelisted with
+    | Some rate =>
+      franc_addr <- franc_address;
+      msg = {_tag: "TransferFrom"; _recipient : franc_addr; _amount: zero; from: _sender; to: _this_address; amount: amount};
+      msgs = one_msg msg;
+      send msgs;
+      
+      token_amount = builtin mul amount rate;
+      padAmount = builtin mul token_amount tenthousand;
+      (*Initial of 9950 would equate to 99.50% back to user*)
+      returnUserRate <- marginRate;
+      margin_percent = builtin sub tenthousand returnUserRate;
+      margin_amount = builtin mul token_amount margin_percent;
+      padded_token_to_recipient = builtin sub padAmount margin_amount;
+      token_to_recipient = builtin div padded_token_to_recipient tenthousand;
+      
+      (*deduct token held balances*)
+      tok_bal <- token_balances[token_address];
+      bal = get_val tok_bal;
+      newBal = builtin sub bal amount;
+      token_balances[token_address] := newBal;
+      
+      franc_addr <- franc_address;
+      msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
+              to: _sender; amount: token_to_recipient};
+      msgs = one_msg msg;
+      send msgs
+      
+    | None =>
+      (*Token not whitelisted*)
+      err = CodeNotWhitelisted;
+      ThrowError err
+  end
 end
 
 transition setTokenToFrancRate(token_address: ByStr20, rate: Uint128)
@@ -190,7 +226,6 @@ transition RecipientAcceptTransferFrom(
       err = CodeNotWhitelisted;
       ThrowError err
   end
-
 end
 
 (*Transitions is needed should a Transfer be Used to send funds to this contract, without this transition the contract will reject any zrc-2 tokens*)

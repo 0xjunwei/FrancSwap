@@ -28,11 +28,7 @@ let true = True
 let false = False
 
 type Error =
-  | CodeInsufficientFunds
-  | CodeInsufficientAllowance
-  | CodeIsSender
   | CodeNotWhitelisted
-  | CodeNotImplementation
   | CodeNotOwner
   | CodeContractPaused
   | CodeNotAbitrager
@@ -42,14 +38,10 @@ let make_error =
   fun (result : Error) =>
   let result_code = 
   match result with
-  | CodeInsufficientFunds       => Int32 1
-  | CodeInsufficientAllowance   => Int32 2
-  | CodeIsSender                => Int32 3
   | CodeNotWhitelisted          => Int32 -11
-  | CodeNotImplementation       => Int32 -12
-  | CodeNotOwner                => Int32 -13
-  | CodeContractPaused          => Int32 -14
-  | CodeNotAbitrager            => Int32 -15
+  | CodeNotOwner                => Int32 -12
+  | CodeContractPaused          => Int32 -13
+  | CodeNotAbitrager            => Int32 -14
   end
   in
 { _exception : "Error"; code : result_code }
@@ -231,6 +223,8 @@ transition removeWhitelistTokenAddress(token_address: ByStr20)
   delete franc_to_token_rate[token_address]
 end
 
+(*When changing margin set the amount to be returned to user in % x 100 form*)
+(*e.g. 99.50% returned to user would result in a 0.5% margin fee, therefore margin is set to 9950*)
 transition changeMargin(margin: Uint128)
   isOwner;
   marginRate := margin

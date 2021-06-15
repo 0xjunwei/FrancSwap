@@ -143,15 +143,16 @@ transition swapTokenToFranc(token_address: ByStr20, amount: Uint128)
     | Some rate =>
       option_swapBal <- userSwapAmount[_sender];
       swapBal = get_val option_swapBal;
+      curr_block <- & BLOCKNUMBER;
       isZeroCheck = builtin eq zero swapBal;
       match isZeroCheck with
         | True =>
-          curr_block <- & BLOCKNUMBER;
+
           additionalBlock <- dailyBlockNumber;
           nextReset = builtin badd curr_block additionalBlock;
           userSwapReset[_sender] := nextReset
         | False =>
-          curr_block <- & BLOCKNUMBER;
+
           option_blockReset <- userSwapReset[_sender];
           blockReset = get_blkval option_blockReset;
           
@@ -159,7 +160,6 @@ transition swapTokenToFranc(token_address: ByStr20, amount: Uint128)
           match isBlockHigher with
             | True =>
             | False =>
-              curr_block <- & BLOCKNUMBER;
               additionalBlock <- dailyBlockNumber;
               nextReset = builtin badd curr_block additionalBlock;
               userSwapReset[_sender] := nextReset;

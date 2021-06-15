@@ -141,8 +141,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
-      padFront = builtin mul amount hundred;
-      token_amount = builtin div padFront rate;
+      token_amount = builtin mul amount rate;
       
       padAmount = builtin mul token_amount tenthousand;
 
@@ -152,17 +151,17 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       margin_amount = builtin mul token_amount margin_percent;
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
-
+      depad_token_to_recipient = builtin div token_to_recipient hundred;
       
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;
-      newBal = builtin sub bal token_to_recipient;
+      newBal = builtin sub bal depad_token_to_recipient;
       token_balances[token_address] := newBal;
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
-              to: _sender; amount: token_to_recipient};
+              to: _sender; amount: depad_token_to_recipient};
       msgs = one_msg msg;
       send msgs
       
@@ -260,8 +259,7 @@ transition RecipientAcceptTransferFrom(
   match tokenWhitelisted with
     | Some rate =>
 
-
-      franc_amount = builtin mul amount rate;
+      franc_amount = builtin div amount rate;
 
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)

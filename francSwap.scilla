@@ -141,8 +141,8 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
-
-      token_amount = builtin mul amount rate;
+      padFront = builtin mul amount hundred;
+      token_amount = builtin div padFront rate;
       
       padAmount = builtin mul token_amount tenthousand;
 
@@ -263,7 +263,6 @@ transition RecipientAcceptTransferFrom(
 
       franc_amount = builtin mul amount rate;
 
-      
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;

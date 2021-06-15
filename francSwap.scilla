@@ -157,17 +157,17 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       margin_amount = builtin mul token_amount margin_percent;
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
-      depad_token_to_recipient = builtin div token_to_recipient hundred;
+
       
       (*deduct token held balances*)
       tok_bal <- token_balances[token_address];
       bal = get_val tok_bal;
-      newBal = builtin sub bal depad_token_to_recipient;
+      newBal = builtin sub bal token_to_recipient;
       token_balances[token_address] := newBal;
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
-              to: _sender; amount: depad_token_to_recipient};
+              to: _sender; amount: token_to_recipient};
       msgs = one_msg msg;
       send msgs
       
@@ -281,7 +281,7 @@ transition RecipientAcceptTransferFrom(
       margin_amount = builtin mul depadToken margin_percent;
       padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
-      depad_franc_to_recipient = builtin div franc_to_recipient thousand;
+
       (*Add token held balances*)
       tok_bal <- token_balances[_sender];
       bal = get_val tok_bal;
@@ -290,7 +290,7 @@ transition RecipientAcceptTransferFrom(
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;
-              to: sender; amount: depad_franc_to_recipient};
+              to: sender; amount: franc_to_recipient};
       msgs = one_msg msg;
       send msgs
     | None =>

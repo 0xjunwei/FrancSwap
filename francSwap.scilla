@@ -35,6 +35,7 @@ type Error =
   | CodeNotImplementation
   | CodeNotOwner
   | CodeContractPaused
+  | CodeNotAbitrager
 
 
 let make_error =
@@ -48,6 +49,7 @@ let make_error =
   | CodeNotImplementation       => Int32 -12
   | CodeNotOwner                => Int32 -13
   | CodeContractPaused          => Int32 -14
+  | CodeNotAbitrager            => Int32 -15
   end
   in
 { _exception : "Error"; code : result_code }
@@ -76,6 +78,9 @@ field contractPaused : Bool = True
 field franc_address : ByStr20 = franc_token_address
 field token_to_franc_rate: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 field franc_to_token_rate: Map ByStr20 Uint128 = Emp ByStr20 Uint128
+
+field priceUpdater : Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
+
 field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 
@@ -92,6 +97,16 @@ procedure isOwner()
     | True => (*Carry On*)
     | False =>
       err = CodeNotOwner;
+      ThrowError err
+  end
+end
+
+procedure isAbitrage(address: ByStr20)
+  abitrager <- priceUpdater[address];
+  match abitrager with
+    | Some x =>
+    | None =>
+      err = CodeNotAbitrager;
       ThrowError err
   end
 end
@@ -167,7 +182,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
 end
 
 transition setTokenToFrancRate(token_address: ByStr20, rate: Uint128)
-  isOwner;
+  isAbitrage _sender;
   tokenWhitelisted <- token_to_franc_rate[token_address];
   match tokenWhitelisted with
     | Some x =>
@@ -180,7 +195,7 @@ transition setTokenToFrancRate(token_address: ByStr20, rate: Uint128)
 end
 
 transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
-  isOwner;
+  isAbitrage _sender;
   tokenWhitelisted <- franc_to_token_rate[token_address];
   match tokenWhitelisted with
     | Some x =>
@@ -192,6 +207,16 @@ transition setFrancToTokenRate(token_address: ByStr20, rate: Uint128)
   end
 end
 
+transition addAbitrager(address: ByStr20)
+  isOwner;
+  priceUpdater[address] := address
+end
+
+transition removeAbitrager(address: ByStr20)
+  isOwner;
+  delete priceUpdater[address]
+end
+
 (*Rate setting would be multiplied by 100 to factor in decimals exchange, 1:1 rate is set to 100*)
 (*if 1 franc to 1.5 xsgd rate will be set to 150 as it would symbolise 1.50*)
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
@@ -201,6 +226,9 @@ transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint1
 end
 
 transition removeWhitelistTokenAddress(token_address: ByStr20)
+  isOwner;
+  delete token_to_franc_rate[token_address];
+  delete franc_to_token_rate[token_address]
 end
 
 transition changeMargin(margin: Uint128)
@@ -265,7 +293,7 @@ transition RecipientAcceptTransferFrom(
       franc_addr <- franc_address;
       isFranc = builtin eq franc_addr _sender;
       match isFranc with
-        | True =>
+        | True => (*Allow through as this is used for return of Franc*)
         | False =>
           (*Token not whitelisted*)
           err = CodeNotWhitelisted;

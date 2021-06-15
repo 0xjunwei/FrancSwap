@@ -270,8 +270,8 @@ transition RecipientAcceptTransferFrom(
       padValue = get_val uintConversion;
       
       depaddedRate = builtin div rate padValue;
-      paddedAmount = builtin mul amount padValue;
-      franc_amount = builtin div paddedAmount depaddedRate;
+      
+      franc_amount = builtin div amount depaddedRate;
       depadToken = builtin div franc_amount padValue;
       
       padAmount = builtin mul depadToken tenthousand;

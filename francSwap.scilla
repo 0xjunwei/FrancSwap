@@ -309,7 +309,14 @@ transition RecipientAcceptTransfer(
   recipient : ByStr20,
   amount : Uint128
 )
-
+  owner <- owner_addr;
+  isOwner = builtin eq owner sender;
+  match isOwner with
+    | True => (*Carry On*)
+    | False =>
+      err = CodeNotOwner;
+      ThrowError err
+  end
 end
 
 
@@ -320,6 +327,7 @@ transition TransferSuccessCallBack(
   recipient : ByStr20,
   amount : Uint128
 )
+
 end
 
 (*When sending out ZRC-2 tokens via the transferFrom transition on the token smart contract, this is needed by the sender to determine the status of transaction whether the transaction is successful*)
@@ -330,6 +338,16 @@ transition TransferFromSuccessCallBack (
   recipient : ByStr20,
   amount : Uint128
 )
+end
+
+(*Transfer Tokens out of this smart contract*)
+transition transferToken(token_address: ByStr20, token_amount: Uint128)
+  (*Only owner of contract can call and it will only send to owner of contract address as extra precaution*)
+  owner <- owner_addr;
+  isOwner;
+  msg = {_tag : "Transfer"; _recipient: token_address; _amount: Uint128 0; to: owner; amount: token_amount};
+  msgs = one_msg msg;
+  send msgs
 end
 
 

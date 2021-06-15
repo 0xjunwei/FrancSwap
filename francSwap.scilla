@@ -260,8 +260,8 @@ transition RecipientAcceptTransferFrom(
   match tokenWhitelisted with
     | Some rate =>
 
-      padTest = builtin mul amount tenthousand;
-      franc_amount = builtin div padTest rate;
+
+      franc_amount = builtin mul amount rate;
 
       
       padAmount = builtin mul franc_amount tenthousand;

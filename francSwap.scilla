@@ -276,7 +276,8 @@ transition RecipientAcceptTransferFrom(
       paddedAmount = builtin mul amount padValue;
       
       
-      franc_amount = builtin div paddedAmount hundredPad;
+      franc_amount = builtin div paddedAmount depaddedRate;
+      
       depadHundred = builtin div franc_amount hundred;
       depadToken = builtin div depadHundred padValue;
       

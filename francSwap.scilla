@@ -336,6 +336,7 @@ end
 (*Transfer Tokens out of this smart contract*)
 transition transferToken(token_address: ByStr20, token_amount: Uint128)
   (*Only owner of contract can call and it will only send to owner of contract address as extra precaution*)
+  (*Deduct token balance held also *)
   owner <- owner_addr;
   isOwner;
   msg = {_tag : "Transfer"; _recipient: token_address; _amount: Uint128 0; to: owner; amount: token_amount};

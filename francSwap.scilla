@@ -256,8 +256,9 @@ transition removeAbitrager(address: ByStr20)
   delete priceUpdater[address]
 end
 
-(*Rate setting would be multiplied by 100 to factor in decimals exchange, 1:1 rate is set to 100*)
-(*if 1 franc to 1.5 xsgd rate will be set to 150 as it would symbolise 1.50*)
+(*Rate setting would be written as how many of the token is to 1 Franc for e.g. 1 xsgd to 0.66 franc would be 660000 as its 0.66*)
+(*GZIL to Franc would be 0005745396157995 15 decimal places, so key in 5745396157995*)
+(*Divide token by franc and you would get a 0.XXXXX / XXXXX using the token decimals key in as per normal but without the decimal place*)
 transition whitelistTokenAddress(token_address: ByStr20, franc_token_rate: Uint128, token_franc_rate: Uint128)
   isOwner;
   token_to_franc_rate[token_address] := token_franc_rate;

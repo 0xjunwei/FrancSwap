@@ -76,6 +76,8 @@ field priceUpdater : Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 
 field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
+field dailySwapLimit : Uint128 = Uint128 10000000000
+field userSwapAmount : Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
 (* Procedures *)
 procedure ThrowError(err : Error)
@@ -150,7 +152,7 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       depaddedRate = builtin div hundredPad padValue;
       padded_token_amount = builtin mul amount depaddedRate;
       token_amount = builtin div padded_token_amount hundred;
-      
+
       padAmount = builtin mul token_amount tenthousand;
 
       (*Initial of 9950 would equate to 99.50% back to user*)
@@ -160,12 +162,6 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       padded_token_to_recipient = builtin sub padAmount margin_amount;
       token_to_recipient = builtin div padded_token_to_recipient tenthousand;
 
-      
-      (*deduct token held balances*)
-      tok_bal <- token_balances[token_address];
-      bal = get_val tok_bal;
-      newBal = builtin sub bal token_to_recipient;
-      token_balances[token_address] := newBal;
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: token_address; _amount: zero;
@@ -276,10 +272,7 @@ transition RecipientAcceptTransferFrom(
       
       
       franc_amount = builtin div paddedAmount rate;
-      
-      (*depadToken = builtin div franc_amount padValue;*)
-      
-      
+
       padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
@@ -337,7 +330,11 @@ transition TransferSuccessCallBack(
   recipient : ByStr20,
   amount : Uint128
 )
-
+      (*deduct token held balances*)
+      tok_bal <- token_balances[_sender];
+      bal = get_val tok_bal;
+      newBal = builtin sub bal amount;
+      token_balances[_sender] := newBal
 end
 
 (*When sending out ZRC-2 tokens via the transferFrom transition on the token smart contract, this is needed by the sender to determine the status of transaction whether the transaction is successful*)

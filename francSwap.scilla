@@ -16,13 +16,20 @@ fun (msg2 : Message) =>
   let msgs_tmp = one_msg msg2 in
   Cons {Message} msg1 msgs_tmp
 
+let blk_leq =
+  fun (blk1 : BNum) =>
+  fun (blk2 : BNum) =>
+    let bc1 = builtin blt blk1 blk2 in 
+    let bc2 = builtin eq blk1 blk2 in 
+    orb bc1 bc2
+
 let zero = Uint128 0
 let ten = Uint128 10
 let hundred = Uint128 100
 let thousand = Uint128 1000
 let tenthousand = Uint128 10000
 let tenInt = Uint32 10
-
+let blkZero = BNum 0
 
 let true = True
 let false = False
@@ -32,6 +39,7 @@ type Error =
   | CodeNotOwner
   | CodeContractPaused
   | CodeNotAbitrager
+  | CodeSwapLimitExceed
 
 
 let make_error =
@@ -42,6 +50,7 @@ let make_error =
   | CodeNotOwner                => Int32 -12
   | CodeContractPaused          => Int32 -13
   | CodeNotAbitrager            => Int32 -14
+  | CodeSwapLimitExceed         => Int32 -15
   end
   in
 { _exception : "Error"; code : result_code }
@@ -53,6 +62,13 @@ let get_val =
   | Some val => val
   | None => zero
   end
+  
+let get_blkval =
+  fun (some_val: Option BNum) =>
+    match some_val with
+    | Some val => val
+    | None => blkZero
+    end
   
 contract FranSwap
 (
@@ -76,8 +92,10 @@ field priceUpdater : Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 
 field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
+field dailyBlockNumber : Uint128 = Uint128 2200
 field dailySwapLimit : Uint128 = Uint128 10000000000
 field userSwapAmount : Map ByStr20 Uint128 = Emp ByStr20 Uint128
+field userSwapReset : Map ByStr20 BNum = Emp ByStr20 BNum
 
 (* Procedures *)
 procedure ThrowError(err : Error)
@@ -123,6 +141,32 @@ transition swapTokenToFranc(token_address: ByStr20, amount: Uint128)
   tokenWhitelisted <- token_to_franc_rate[token_address];
   match tokenWhitelisted with
     | Some rate =>
+      option_swapBal <- userSwapAmount[_sender];
+      swapBal = get_val option_swapBal;
+      isZeroCheck = builtin eq zero swapBal;
+      match isZeroCheck with
+        | True =>
+          curr_block <- & BLOCKNUMBER;
+          additionalBlock <- dailyBlockNumber;
+          nextReset = builtin badd curr_block additionalBlock;
+          userSwapReset[_sender] := nextReset
+        | False =>
+          curr_block <- & BLOCKNUMBER;
+          option_blockReset <- userSwapReset[_sender];
+          blockReset = get_blkval option_blockReset;
+          
+          isBlockHigher = blk_leq curr_block blockReset;
+          match isBlockHigher with
+            | True =>
+            | False =>
+              curr_block <- & BLOCKNUMBER;
+              additionalBlock <- dailyBlockNumber;
+              nextReset = builtin badd curr_block additionalBlock;
+              userSwapReset[_sender] := nextReset;
+              userSwapAmount[_sender] := zero
+          end
+      end;
+      
       msg = {_tag: "TransferFrom"; _recipient : token_address; _amount: zero; from: _sender; to: _this_address; amount: amount};
       msgs = one_msg msg;
       send msgs
@@ -233,6 +277,11 @@ transition changeMargin(margin: Uint128)
   marginRate := margin
 end
 
+transition changeDailySwapLimit(amount: Uint128)
+  isOwner;
+  dailySwapLimit := amount
+end
+
 transition changeFrancAddr(address: ByStr20)
   isOwner;
   franc_address := address
@@ -262,14 +311,12 @@ transition RecipientAcceptTransferFrom(
   tokenWhitelisted <- token_to_franc_rate[_sender];
   match tokenWhitelisted with
     | Some rate =>
-
+      
       decimalPlaces = builtin pow tenInt franc_decimals;
       uintConversion = builtin to_uint128 decimalPlaces;
       padValue = get_val uintConversion;
-      
-      
+
       paddedAmount = builtin mul amount padValue;
-      
       
       franc_amount = builtin div paddedAmount rate;
 
@@ -286,6 +333,19 @@ transition RecipientAcceptTransferFrom(
       bal = get_val tok_bal;
       newBal = builtin add bal amount;
       token_balances[_sender] := newBal;
+      
+      option_swap_Bal <- userSwapAmount[sender];
+      swap_bal = get_val option_swap_Bal;
+      afterSwap = builtin add franc_to_recipient swap_bal;
+      limit <- dailySwapLimit;
+      isGreaterThanLimit = uint128_gt afterSwap limit;
+      match isGreaterThanLimit with
+        | True =>
+          err = CodeSwapLimitExceed;
+          ThrowError err
+        | False =>
+          userSwapAmount[sender] := afterSwap
+      end;
       
       franc_addr <- franc_address;
       msg = {_tag : "Transfer"; _recipient: franc_addr; _amount: zero;

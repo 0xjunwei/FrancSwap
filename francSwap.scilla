@@ -146,8 +146,10 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       uintConversion = builtin to_uint128 decimalPlaces;
       padValue = get_val uintConversion;
       
-      depaddedRate = builtin div rate padValue;
-      token_amount = builtin mul amount depaddedRate;
+      hundredPad = builtin mul rate hundred;
+      depaddedRate = builtin div hundredPad padValue;
+      padded_token_amount = builtin mul amount depaddedRate;
+      token_amount = builtin div padded_token_amount hundred;
       
       padAmount = builtin mul token_amount tenthousand;
 
@@ -269,11 +271,14 @@ transition RecipientAcceptTransferFrom(
       uintConversion = builtin to_uint128 decimalPlaces;
       padValue = get_val uintConversion;
       
-      depaddedRate = builtin div rate padValue;
+      hundredPad = builtin mul rate hundred;
+      depaddedRate = builtin div hundredPad padValue;
       paddedAmount = builtin mul amount padValue;
       
-      franc_amount = builtin div paddedAmount depaddedRate;
-      depadToken = builtin div franc_amount padValue;
+      
+      franc_amount = builtin div paddedAmount hundredPad;
+      depadHundred = builtin div franc_amount hundred;
+      depadToken = builtin div depadHundred padValue;
       
       padAmount = builtin mul depadToken tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)

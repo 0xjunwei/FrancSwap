@@ -271,21 +271,20 @@ transition RecipientAcceptTransferFrom(
       uintConversion = builtin to_uint128 decimalPlaces;
       padValue = get_val uintConversion;
       
-      hundredPad = builtin mul rate hundred;
-      depaddedRate = builtin div hundredPad padValue;
+      
       paddedAmount = builtin mul amount padValue;
       
       
-      franc_amount = builtin div paddedAmount depaddedRate;
+      franc_amount = builtin div paddedAmount rate;
       
-      depadHundred = builtin div franc_amount hundred;
-      depadToken = builtin div depadHundred padValue;
+      (*depadToken = builtin div franc_amount padValue;*)
       
-      padAmount = builtin mul depadToken tenthousand;
+      
+      padAmount = builtin mul franc_amount tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
       margin_percent = builtin sub tenthousand returnUserRate;
-      margin_amount = builtin mul depadToken margin_percent;
+      margin_amount = builtin mul franc_amount margin_percent;
       padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
 

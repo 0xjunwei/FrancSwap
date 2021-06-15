@@ -57,7 +57,8 @@ let get_val =
 contract FranSwap
 (
     contract_owner: ByStr20,
-    franc_token_address: ByStr20
+    franc_token_address: ByStr20,
+    franc_decimals: Uint32
 )
 (* Mutable fields *)
 field owner_addr: ByStr20 = contract_owner
@@ -141,6 +142,11 @@ transition swapFrancToToken(token_address: ByStr20, amount: Uint128)
       msgs = one_msg msg;
       send msgs;
       
+      decimalPlaces = builtin pow tenInt franc_decimals;
+      uintConversion = builtin to_uint128 decimalPlaces;
+      padValue = get_val uintConversion;
+      
+      depaddedRate = builtin div rate padValue;
       token_amount = builtin mul amount rate;
       
       padAmount = builtin mul token_amount tenthousand;
@@ -259,16 +265,23 @@ transition RecipientAcceptTransferFrom(
   match tokenWhitelisted with
     | Some rate =>
 
-      franc_amount = builtin div amount rate;
-
-      padAmount = builtin mul franc_amount tenthousand;
+      decimalPlaces = builtin pow tenInt franc_decimals;
+      uintConversion = builtin to_uint128 decimalPlaces;
+      padValue = get_val uintConversion;
+      
+      depaddedRate = builtin div rate padValue;
+      paddedAmount = builtin mul amount padValue;
+      franc_amount = builtin div paddedAmount depaddedRate;
+      depadToken = builtin div franc_amount padValue;
+      
+      padAmount = builtin mul depadToken tenthousand;
       (*Initial of 9950 would equate to 99.50% back to user*)
       returnUserRate <- marginRate;
       margin_percent = builtin sub tenthousand returnUserRate;
-      margin_amount = builtin mul franc_amount margin_percent;
+      margin_amount = builtin mul depadToken margin_percent;
       padded_franc_to_recipient = builtin sub padAmount margin_amount;
       franc_to_recipient = builtin div padded_franc_to_recipient tenthousand;
-      depad_franc_to_recipient = builtin div franc_to_recipient hundred;
+      depad_franc_to_recipient = builtin div franc_to_recipient thousand;
       (*Add token held balances*)
       tok_bal <- token_balances[_sender];
       bal = get_val tok_bal;

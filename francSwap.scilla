@@ -92,7 +92,7 @@ field priceUpdater : Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 
 field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
-field dailyBlockNumber : Uint128 = Uint128 2200
+field dailyBlockNumber : Uint128 = Uint128 100
 field dailySwapLimit : Uint128 = Uint128 10000000000
 field userSwapAmount : Map ByStr20 Uint128 = Emp ByStr20 Uint128
 field userSwapReset : Map ByStr20 BNum = Emp ByStr20 BNum
@@ -372,6 +372,11 @@ transition RecipientAcceptTransferFrom(
       isFranc = builtin eq franc_addr _sender;
       match isFranc with
         | True => (*Allow through as this is used for return of Franc*)
+          (*Add token held balances*)
+          tok_bal <- token_balances[_sender];
+          bal = get_val tok_bal;
+          newBal = builtin add bal amount;
+          token_balances[_sender] := newBal
         | False =>
           (*Token not whitelisted*)
           err = CodeNotWhitelisted;

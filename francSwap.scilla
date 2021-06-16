@@ -92,7 +92,7 @@ field priceUpdater : Map ByStr20 ByStr20 = Emp ByStr20 ByStr20
 
 field token_balances: Map ByStr20 Uint128 = Emp ByStr20 Uint128
 
-field dailyBlockNumber : Uint128 = Uint128 100
+field dailyBlockNumber : Uint128 = Uint128 2200
 field dailySwapLimit : Uint128 = Uint128 10000000000
 field userSwapAmount : Map ByStr20 Uint128 = Emp ByStr20 Uint128
 field userSwapReset : Map ByStr20 BNum = Emp ByStr20 BNum
